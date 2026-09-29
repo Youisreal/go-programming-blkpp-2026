@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 	"sort"
@@ -9,25 +10,76 @@ import (
 	"strings"
 )
 
+// Menambahkan struct tags `json:""` agar format JSON rapi dengan huruf kecil
 type Student struct {
-	ID     int
-	Name   string
-	Major  string
-	Score  int
-	Active bool
+	ID     int    `json:"id"`
+	Name   string `json:"name"`
+	Major  string `json:"major"`
+	Score  int    `json:"score"`
+	Active bool   `json:"active"`
+}
+
+const fileName = "students.json"
+
+// Fungsi untuk membaca data dari file JSON
+func loadStudents() ([]Student, int) {
+	file, err := os.ReadFile(fileName)
+
+	// Jika file belum ada, buat data default awal
+	if os.IsNotExist(err) {
+		initialData := []Student{
+			{ID: 1, Name: "Budi", Major: "Backend", Score: 82, Active: true},
+			{ID: 2, Name: "Siti", Major: "Frontend", Score: 91, Active: true},
+			{ID: 3, Name: "Andi", Major: "Backend", Score: 74, Active: false},
+		}
+		saveStudents(initialData)
+		return initialData, 4
+	} else if err != nil {
+		fmt.Println("Gagal membaca file JSON:", err)
+		return []Student{}, 1
+	}
+
+	var students []Student
+	err = json.Unmarshal(file, &students)
+	if err != nil {
+		fmt.Println("Gagal decode JSON:", err)
+		return []Student{}, 1
+	}
+
+	// Cari ID tertinggi untuk menentukan nextID berikutnya
+	maxID := 0
+	for _, s := range students {
+		if s.ID > maxID {
+			maxID = s.ID
+		}
+	}
+
+	return students, maxID + 1
+}
+
+// Fungsi untuk menyimpan/menulis data ke file JSON
+func saveStudents(students []Student) {
+	// Menggunakan MarshalIndent agar file JSON mudah dibaca oleh manusia (pretty print)
+	jsonData, err := json.MarshalIndent(students, "", "  ")
+	if err != nil {
+		fmt.Println("Gagal konversi ke JSON:", err)
+		return
+	}
+
+	err = os.WriteFile(fileName, jsonData, 0644)
+	if err != nil {
+		fmt.Println("Gagal menyimpan ke file JSON:", err)
+	}
 }
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
-	students := []Student{
-		{ID: 1, Name: "Budi", Major: "Backend", Score: 82, Active: true},
-		{ID: 2, Name: "Siti", Major: "Frontend", Score: 91, Active: true},
-		{ID: 3, Name: "Andi", Major: "Backend", Score: 74, Active: false},
-	}
-	nextID := 4
+
+	// Load data langsung dari file JSON saat aplikasi dibuka
+	students, nextID := loadStudents()
 
 	for {
-		fmt.Println("\n=== Menu Student ===")
+		fmt.Println("\n=== Menu Student (Terhubung dengan JSON) ===")
 		fmt.Println("1. Lihat semua student")
 		fmt.Println("2. Tambah student")
 		fmt.Println("3. Update nilai")
@@ -53,11 +105,16 @@ func main() {
 				Active: true,
 			})
 			nextID++
+
+			// Simpan perubahan ke JSON setelah ditambah
+			saveStudents(students)
 			fmt.Println("Student berhasil ditambahkan.")
 		case 3:
 			id := readInt(scanner, "ID student: ")
 			score := readInt(scanner, "Nilai baru: ")
 			if updateScore(students, id, score) {
+				// Simpan perubahan ke JSON setelah diupdate
+				saveStudents(students)
 				fmt.Println("Nilai berhasil diupdate.")
 			} else {
 				fmt.Println("Student tidak ditemukan.")
@@ -65,6 +122,9 @@ func main() {
 		case 4:
 			before := len(students)
 			students = removeInactive(students)
+
+			// Simpan perubahan ke JSON setelah dihapus
+			saveStudents(students)
 			fmt.Printf("%d student inactive dihapus.\n", before-len(students))
 		case 5:
 			major := readString(scanner, "Jurusan: ")
