@@ -50,6 +50,31 @@ func readUsers() []User {
 	return users
 }
 
+func writeUsers(users []User) {
+	file, err := os.Create(csvFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	// Write header
+	writer.Write([]string{"ID", "Name", "Username", "Password", "Authenticator"})
+
+	// Write user data
+	for _, user := range users {
+		writer.Write([]string{
+			strconv.Itoa(user.ID),
+			user.Name,
+			user.Username,
+			user.Password,
+			user.Authenticator,
+		})
+	}
+}
+
 func input(label string) string {
 	// Catatan: helper ini dipakai supaya input seperti nama bisa memakai spasi.
 	fmt.Print(label)
@@ -62,17 +87,65 @@ func InputInt(label string) int {
 	return value
 }
 
+func addUser() {
+	users := readUsers()
+
+	name := input("Nama: ")
+	username := input("Username: ")
+	password := input("Password: ")
+	authenticator := input("Authenticator: ")
+
+	id := 1
+	if len(users) > 0 {
+		id = users[len(users)-1].ID + 1
+	}
+
+	users = append(users, User{id, name, username, password, authenticator})
+	writeUsers(users)
+	fmt.Println("User berhasil ditambahkan")
+}
+
+func updateUser() {
+	users := readUsers()
+	showUsers()
+	id := InputInt("Masukkan ID user yang ingin diupdate: ")
+	name := input("Nama baru: ")
+	username := input("Username baru: ")
+	password := input("Password baru: ")
+	authenticator := input("Authenticator baru: ")
+
+	for i, user := range users {
+		if user.ID == id {
+			users[i].Name = name
+			users[i].Username = username
+			users[i].Password = password
+			users[i].Authenticator = authenticator
+			writeUsers(users)
+			fmt.Println("User berhasil diupdate")
+			return
+		}
+	}
+	fmt.Println("User dengan ID tersebut tidak ditemukan")
+}
+
 func main() {
 	for {
 		fmt.Println("Menu:")
-		fmt.Println("1. Show Users")
-		fmt.Println("2. Exit")
+		fmt.Println("1. Tampilkan Users")
+		fmt.Println("2. Tambah User")
+		fmt.Println("3. Update User")
+		fmt.Println("4. Exit")
 
 		choice := InputInt("Pilih menu: ")
 		switch choice {
 		case 1:
 			showUsers()
 		case 2:
+			addUser()
+		case 3:
+			updateUser()
+		case 4:
+			fmt.Println("Terima kasih!")
 			return
 		default:
 			fmt.Println("Pilihan tidak valid")
