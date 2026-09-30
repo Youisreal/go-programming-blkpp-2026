@@ -1,0 +1,60 @@
+[
+  {
+    "id": 1,
+    "name": "Andi",
+    "email": "andi@example.com",
+    "profile": {
+      "city": "Balikpapan",
+      "phone": "0812-1111-2222"
+    },
+    "courses": [
+      {
+        "code": "GO101",
+        "title": "Dasar Go",
+        "grade": "A"
+      },
+      {
+        "code": "DB101",
+        "title": "Basis Data",
+        "grade": "B+"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Budi",
+    "email": "budi@example.com",
+    "profile": {
+      "city": "Samarinda",
+      "phone": "0812-3333-4444"
+    },
+    "courses": [
+      {
+        "code": "GO101",
+        "title": "Dasar Go",
+        "grade": "B"
+      },
+      {
+        "code": "WEB101",
+        "title": "Pemrograman Web",
+        "grade": "A-"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Citra",
+    "email": "citra@example.com",
+    "profile": {
+      "city": "Penajam",
+      "phone": "0812-5555-6666"
+    },
+    "courses": [
+      {
+        "code": "GO201",
+        "title": "File I/O",
+        "grade": "A"
+      }
+    ]
+  }
+]
