@@ -1,3 +1,3 @@
-module http-wiki
+module http-html
 
-go 1.22.2
+go 1.20
