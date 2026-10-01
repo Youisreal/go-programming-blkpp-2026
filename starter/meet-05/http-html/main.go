@@ -101,37 +101,4 @@ func writeHTML(w http.ResponseWriter, data pageData) {
 	}
 }
 
-var pageTemplate = template.Must(template.New("page").Parse(`<!doctype html>
-<html lang="id">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{.Title}}</title>
-</head>
-<body>
-  <main>
-    <header>
-      <h1>{{.Title}}</h1>
-      {{if .IsIndex}}<p>Daftar artikel singkat dari data JSON.</p>{{else}}<p><a href="/articles">Kembali ke daftar artikel</a></p>{{end}}
-    </header>
-
-    {{if .IsIndex}}
-      <section>
-        {{range .Articles}}
-          <article>
-            <h2><a href="/articles/{{.Slug}}">{{.Title}}</a></h2>
-            <p>{{.Summary}}</p>
-            <ul>{{range .Tags}}<li>{{.}}</li>{{end}}</ul>
-          </article>
-        {{end}}
-      </section>
-    {{else}}
-      <article>
-        <p>{{.Article.Summary}}</p>
-        <ul>{{range .Article.Tags}}<li>{{.}}</li>{{end}}</ul>
-      </article>
-    {{end}}
-  </main>
-</body>
-</html>
-`))
+var pageTemplate = template.Must(template.ParseFiles("templates/page.html"))
