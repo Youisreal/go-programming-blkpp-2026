@@ -128,13 +128,29 @@ func updateUser() {
 	fmt.Println("User dengan ID tersebut tidak ditemukan")
 }
 
+func deleteUser() {
+	users := readUsers()
+	showUsers()
+	id := InputInt("Masukkan ID user yang ingin dihapus: ")
+	for i, user := range users {
+		if user.ID == id {
+			users = append(users[:i], users[i+1:]...)
+			writeUsers(users)
+			fmt.Println("User berhasil dihapus")
+			return
+		}
+	}
+	fmt.Println("User dengan ID tersebut tidak ditemukan")
+}
+
 func main() {
 	for {
 		fmt.Println("Menu:")
 		fmt.Println("1. Tampilkan Users")
 		fmt.Println("2. Tambah User")
 		fmt.Println("3. Update User")
-		fmt.Println("4. Exit")
+		fmt.Println("4. Hapus User")
+		fmt.Println("5. Exit")
 
 		choice := InputInt("Pilih menu: ")
 		switch choice {
@@ -145,6 +161,8 @@ func main() {
 		case 3:
 			updateUser()
 		case 4:
+			deleteUser()
+		case 5:
 			fmt.Println("Terima kasih!")
 			return
 		default:
