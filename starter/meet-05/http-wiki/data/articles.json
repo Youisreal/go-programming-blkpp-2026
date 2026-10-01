@@ -1,0 +1,26 @@
+[
+  {
+    "slug": "go",
+    "title": "Go",
+    "summary": "Bahasa pemrograman ringkas untuk membuat service cepat dan mudah dirawat.",
+    "tags": ["programming", "backend"]
+  },
+  {
+    "slug": "http",
+    "title": "HTTP",
+    "summary": "Protokol request-response yang dipakai browser dan API web.",
+    "tags": ["web", "protocol"]
+  },
+  {
+    "slug": "json",
+    "title": "JSON",
+    "summary": "Format data teks yang umum dipakai untuk pertukaran data antar aplikasi.",
+    "tags": ["data", "api"]
+  },
+  {
+    "slug": "balikpapan",
+    "title": "Balikpapan",
+    "summary": "Kota pesisir di Kalimantan Timur yang dikenal sebagai kota jasa dan energi.",
+    "tags": ["city", "indonesia"]
+  }
+]
