@@ -1,0 +1,56 @@
+[
+  {
+    "id": 1,
+    "userId": {
+      "id": 1,
+      "name": "John Doe",
+      "username": "johndoe",
+      "email": "johndoe@example.com",
+      "password": "password123"
+    },
+    "title": "",
+    "tasktimeline": {
+      "waktuBuat": "2026-10-21T08:30:00Z",
+      "deadline": "2026-10-24T08:30:00Z"
+    },
+    "deskripsi": "Belajar Golang dari dasar hingga mahir",
+    "progress": 0.5,
+    "status": false
+  },
+  {
+    "id": 2,
+    "userId": {
+      "id": 1,
+      "name": "John Doe",
+      "username": "john.doe",
+      "email": "john.doe@example.com",
+      "password": "password123"
+    },
+    "title": "Bersih bersih kamar",
+    "tasktimeline": {
+      "waktuBuat": "2026-10-02T08:40:26.5773539+07:00",
+      "deadline": "2026-10-04T00:00:00Z"
+    },
+    "deskripsi": "Bersihkan rak dan meja belajar",
+    "progress": 0,
+    "status": false
+  },
+  {
+    "id": 3,
+    "userId": {
+      "id": 1,
+      "name": "John Doe",
+      "username": "john.doe",
+      "email": "john.doe@example.com",
+      "password": "password123"
+    },
+    "title": "Tidur siang",
+    "tasktimeline": {
+      "waktuBuat": "2026-10-02T14:15:30.2901207+07:00",
+      "deadline": "2026-10-02T00:00:00+07:00"
+    },
+    "deskripsi": "Pokoknya harus tidur",
+    "progress": 0,
+    "status": true
+  }
+]
