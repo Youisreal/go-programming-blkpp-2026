@@ -11,6 +11,7 @@ import (
 	"meet08b/internal/config"
 	"meet08b/internal/database"
 	"meet08b/internal/product"
+	"meet08b/internal/summary"
 	"meet08b/internal/supplier"
 )
 
@@ -33,12 +34,14 @@ func run() error {
 	productHandler := product.Handler{Service: product.Service{Repository: repository}}
 	categoryHandler := category.Handler{Service: category.Service{Repository: category.Repository{DB: db}}}
 	supplierHandler := supplier.Handler{Service: supplier.Service{Repository: supplier.Repository{DB: db}}}
+	summaryHandler := summary.Handler{Service: summary.Service{Repository: summary.Repository{DB: db}}}
 
 	mux := http.NewServeMux()
 	mux.Handle("/products", productHandler)
 	mux.Handle("/products/", productHandler)
 	mux.Handle("/categories", categoryHandler)
 	mux.Handle("/suppliers", supplierHandler)
+	mux.Handle("/summary", summaryHandler)
 
 	server := &http.Server{
 		Addr:              cfg.Addr,

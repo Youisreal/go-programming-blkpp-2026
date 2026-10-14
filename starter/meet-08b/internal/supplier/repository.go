@@ -10,11 +10,7 @@ import (
 type Repository struct{ DB *sql.DB }
 
 func (r Repository) List(ctx context.Context) (json.RawMessage, error) {
-	rows, err := r.DB.QueryContext(ctx, `
-		SELECT supplier_id, supplier_name, contact_name, address, city, postal_code, country, phone
-		FROM suppliers
-		ORDER BY supplier_id
-	`)
+	rows, err := r.DB.QueryContext(ctx, "SELECT * FROM suppliers ORDER BY supplier_id")
 	if err != nil {
 		return nil, err
 	}
