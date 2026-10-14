@@ -3,6 +3,7 @@ package product
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -47,10 +48,12 @@ func decodeBody(w http.ResponseWriter, r *http.Request) (Input, bool) {
 	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
+
 	if err := decoder.Decode(&p); err != nil {
 		fail(w, http.StatusBadRequest, "body harus JSON produk valid, maksimal 1 MiB")
 		return p, false
 	}
+
 	var extra any
 	if err := decoder.Decode(&extra); err != io.EOF {
 		fail(w, http.StatusBadRequest, "body harus berisi satu objek JSON")
@@ -146,6 +149,7 @@ func (h Handler) Products(w http.ResponseWriter, r *http.Request) {
 
 func (h Handler) ProductItem(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseID(w, r.URL.Path, "/products/")
+	fmt.Println("ProductItem ID:", id)
 	if !ok {
 		return
 	}
