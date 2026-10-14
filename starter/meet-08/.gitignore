@@ -1,0 +1,6 @@
+/northwind.db
+/northwind.db-*
+/meet08
+.env
+.env.*
+!.env.example
