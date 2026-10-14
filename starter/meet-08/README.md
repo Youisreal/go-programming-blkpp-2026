@@ -57,15 +57,15 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f northwind.sql
 
 ## Endpoint
 
-| Method | Path | Fungsi |
-| --- | --- | --- |
-| GET | `/products` | Daftar produk |
-| GET | `/products/{id}` | Detail produk |
-| POST | `/products` | Tambah produk |
-| PUT | `/products/{id}` | Ganti data produk |
-| DELETE | `/products/{id}` | Hapus produk |
-| GET | `/categories` | Daftar kategori untuk memilih `category_id` |
-| GET | `/suppliers` | Daftar supplier untuk memilih `supplier_id` |
+| Method | Path             | Fungsi                                      |
+| ------ | ---------------- | ------------------------------------------- |
+| GET    | `/products`      | Daftar produk                               |
+| GET    | `/products/{id}` | Detail produk                               |
+| POST   | `/products`      | Tambah produk                               |
+| PUT    | `/products/{id}` | Ganti data produk                           |
+| DELETE | `/products/{id}` | Hapus produk                                |
+| GET    | `/categories`    | Daftar kategori untuk memilih `category_id` |
+| GET    | `/suppliers`     | Daftar supplier untuk memilih `supplier_id` |
 
 Daftar mengembalikan array JSON; detail/create/update/delete mengembalikan satu objek produk. POST mengembalikan 201, operasi berhasil lainnya 200. Error berupa `{"error":"pesan"}`: 400 untuk input salah, 404 untuk produk/endpoint tidak ditemukan, 405 untuk method salah, 409 untuk foreign key salah, 500 untuk kegagalan database.
 
