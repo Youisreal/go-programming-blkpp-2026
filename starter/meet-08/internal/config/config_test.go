@@ -2,6 +2,7 @@ package config
 
 import (
 	"net/url"
+	"strings"
 	"testing"
 )
 
@@ -18,8 +19,8 @@ func TestLoad(t *testing.T) {
 		t.Fatalf("custom config: %+v, err=%v", cfg, err)
 	}
 	t.Setenv("DATABASE_URL", "")
-	if _, err := Load(); err == nil {
-		t.Fatal("DATABASE_URL kosong harus ditolak")
+	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "belum diisi") {
+		t.Fatalf("DATABASE_URL kosong harus diberi petunjuk mengisi konfigurasi: %v", err)
 	}
 }
 

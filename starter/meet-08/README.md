@@ -11,6 +11,7 @@ Koneksi langsung ke PostgreSQL Supabase, bukan REST API Supabase. Gunakan connec
 ```text
 main.go                         startup dan perakitan dependency
 internal/config/config.go       environment, validasi URL database, SSL
+internal/config/env.go          pembaca .env tanpa shell/dependency tambahan
 internal/database/postgres.go   koneksi PostgreSQL, pool, ping, timeout
 internal/product/product.go     input produk dan error domain
 internal/product/repository.go  raw SQL dan pemetaan error PostgreSQL
@@ -27,33 +28,22 @@ Butuh Go 1.20+ dan project Supabase.
 
 1. Buka dashboard Supabase, klik **Connect**, pilih connection string PostgreSQL. Untuk jaringan IPv4 pilih **Session pooler**, port `5432`. Direct connection `db.PROJECT_REF.supabase.co` membutuhkan IPv6 kecuali project memakai dukungan IPv4. Salin host, username, dan port persis dari dashboard; gunakan password database.
 2. Buka **SQL Editor**, jalankan isi `northwind.sql` untuk membuat tabel dan data sampel. Tabel memakai RLS tanpa policy publik; koneksi backend contoh memakai role `postgres` yang dapat mengaksesnya. Jika memakai role lain, atur izin dan policy sesuai kebutuhan.
-3. Salin konfigurasi contoh dan isi connection string lewat editor lokal. `.env` diabaikan Git. URL-encode karakter khusus password, misalnya `@` menjadi `%40`.
-
-   ```sh
-   cp .env.example .env
-   ```
-
-4. Muat konfigurasi lalu jalankan. `.env` tidak dimuat otomatis oleh Go:
+3. Salin `.env.example` menjadi `.env` lewat editor/file manager, lalu isi connection string. `.env` diabaikan Git. URL-encode karakter khusus password, misalnya `@` menjadi `%40`.
+4. Jalankan dari folder project. Berlaku di Windows, macOS, dan Linux:
 
 ```sh
-set -a
-source .env
-set +a
-go mod download
 go run .
 ```
+
+Aplikasi membaca `.env` otomatis dari **folder kerja saat ini**, tanpa menjalankan shell. Environment OS lebih diutamakan, termasuk variabel yang sengaja diisi kosong. `.env` opsional jika konfigurasi tersedia dari OS; nilai file tidak diekspor ke environment proses. Connection string wajib berupa URL `postgresql://USER:PASSWORD@HOST:PORT/postgres?sslmode=require`, bukan anon key Supabase.
+
+Format file: `KEY=value`, kutip tunggal/ganda literal, baris kosong, komentar pada baris tersendiri, dan prefix `export ` opsional. Mendukung UTF-8, BOM UTF-8, serta LF/CRLF. Simpan file sebagai UTF-8, bukan UTF-16. Tidak mendukung multiline, escape/interpolasi, atau komentar di akhir nilai. `$()` dan `${...}` dibaca sebagai teks; tidak dieksekusi. Input rusak menghasilkan nomor baris tanpa menampilkan nilai/password.
 
 Server berjalan di `http://127.0.0.1:8080`. Startup memeriksa koneksi dan tabel produk. SSL wajib: default `sslmode=require`; `verify-ca`/`verify-full` juga didukung. Untuk verifikasi sertifikat/host gunakan `verify-full` dengan konfigurasi CA Supabase yang sesuai. URL/password tidak ditulis ke log startup.
 
 Import dilakukan manual, bukan setiap startup. Import ulang menambah ID sampel yang belum ada, termasuk produk sampel yang sebelumnya dihapus; record yang sudah ada tidak ditimpa. Jangan import ulang jika ingin mempertahankan penghapusan produk sampel. Sequence ID disesuaikan agar POST tidak bentrok dengan ID seed.
 
-Alternatif import dengan PostgreSQL CLI setelah `DATABASE_URL` dimuat:
-
-```sh
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f northwind.sql
-```
-
-`DATABASE_URL` wajib tersedia. `ADDR` opsional untuk mengganti alamat server. File SQLite lama tidak dipakai dan tidak dimigrasikan; import SQL ke Supabase untuk memulai data sampel baru.
+`DATABASE_URL` wajib tersedia dari `.env` atau OS. `ADDR` opsional untuk mengganti alamat server. File SQLite lama tidak dipakai dan tidak dimigrasikan; import SQL lewat SQL Editor Supabase untuk memulai data sampel baru.
 
 ## Endpoint
 
@@ -112,7 +102,7 @@ go vet ./...
 go build .
 ```
 
-`go test` memeriksa config/environment, SSL, serta validasi service tanpa database. Untuk integration check CRUD, validasi, foreign key, SQL injection, dan import ulang, siapkan PostgreSQL test lalu jalankan:
+`go test` memeriksa pemuatan `.env`/environment, BOM/CRLF, kutip literal, perlindungan password pada error, SSL, serta validasi service tanpa database. Untuk integration check CRUD, validasi, foreign key, SQL injection, dan import ulang, siapkan PostgreSQL test lalu jalankan (contoh shell macOS/Linux):
 
 ```sh
 TEST_DATABASE_URL='postgresql://USER:PASSWORD@localhost:5432/TEST_DB?sslmode=disable' go test -v ./...

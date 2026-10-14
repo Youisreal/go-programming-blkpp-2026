@@ -12,11 +12,21 @@ type Config struct {
 }
 
 func Load() (Config, error) {
-	dsn, err := DatabaseURL(os.Getenv("DATABASE_URL"))
+	values, err := readEnvFile(".env")
 	if err != nil {
 		return Config{}, err
 	}
-	addr := os.Getenv("ADDR")
+	get := func(key string) string {
+		if value, ok := os.LookupEnv(key); ok {
+			return value
+		}
+		return values[key]
+	}
+	dsn, err := DatabaseURL(get("DATABASE_URL"))
+	if err != nil {
+		return Config{}, err
+	}
+	addr := get("ADDR")
 	if addr == "" {
 		addr = "127.0.0.1:8080"
 	}
@@ -24,6 +34,9 @@ func Load() (Config, error) {
 }
 
 func DatabaseURL(value string) (string, error) {
+	if value == "" {
+		return "", errors.New("DATABASE_URL belum diisi; isi .env di folder kerja atau environment OS")
+	}
 	u, err := url.Parse(value)
 	if err != nil || (u.Scheme != "postgres" && u.Scheme != "postgresql") || u.Hostname() == "" || u.User == nil || u.User.Username() == "" || u.Path == "" || u.Path == "/" {
 		return "", errors.New("DATABASE_URL wajib berupa connection string PostgreSQL lengkap")
