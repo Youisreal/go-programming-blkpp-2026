@@ -53,12 +53,16 @@ func (r Repository) Create(ctx context.Context, p Input) (json.RawMessage, error
 		p.ProductName, p.SupplierID, p.CategoryID, p.QuantityPerUnit, p.UnitPrice,
 		p.UnitsInStock, p.UnitsOnOrder, p.ReorderLevel, p.Discontinued)
 }
-func (r Repository) Update(ctx context.Context, id int, p Input) (json.RawMessage, error) {
-	return r.query(ctx, `UPDATE products SET product_name=$1, supplier_id=$2, category_id=$3,
-        quantity_per_unit=$4, unit_price=$5, units_in_stock=$6, units_on_order=$7,
-        reorder_level=$8, discontinued=$9 WHERE product_id=$10 RETURNING *`,
-		p.ProductName, p.SupplierID, p.CategoryID, p.QuantityPerUnit, p.UnitPrice,
-		p.UnitsInStock, p.UnitsOnOrder, p.ReorderLevel, p.Discontinued, id)
+func (r Repository) Update(ctx context.Context, id int, new_data Input) (json.RawMessage, error) {
+	return r.query(
+		ctx,
+
+		`UPDATE products SET product_name=$1, supplier_id=$2, category_id=$3,
+		quantity_per_unit=$4, unit_price=$5, units_in_stock=$6, units_on_order=$7,
+		reorder_level=$8, discontinued=$9 WHERE product_id=$10 RETURNING *`,
+
+		new_data.ProductName, new_data.SupplierID, new_data.CategoryID, new_data.QuantityPerUnit, new_data.UnitPrice,
+		new_data.UnitsInStock, new_data.UnitsOnOrder, new_data.ReorderLevel, new_data.Discontinued, id)
 }
 func (r Repository) Delete(ctx context.Context, id int) (json.RawMessage, error) {
 	return r.query(ctx, "DELETE FROM products WHERE product_id = $1 RETURNING *", id)
