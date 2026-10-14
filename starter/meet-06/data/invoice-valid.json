@@ -1,0 +1,25 @@
+{
+  "invoice_number": "INV-2026-0001",
+  "customer": {
+    "name": "Budi Santoso",
+    "type": "regular"
+  },
+  "items": [
+    {
+      "sku": "PRD-001",
+      "name": "Mechanical Keyboard",
+      "unit_price": 250000,
+      "quantity": 2
+    },
+    {
+      "sku": "PRD-002",
+      "name": "Wireless Mouse",
+      "unit_price": 150000,
+      "quantity": 1
+    }
+  ],
+  "discount_percent": 10,
+  "tax_percent": 11,
+  "shipping_fee": 20000,
+  "amount_paid": 700000
+}

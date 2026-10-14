@@ -1,0 +1,19 @@
+{
+  "invoice_number": "INV-2026-0003",
+  "customer": {
+    "name": "Andi Wijaya",
+    "type": "regular"
+  },
+  "items": [
+    {
+      "sku": "PRD-020",
+      "name": "Laptop Stand",
+      "unit_price": 180000,
+      "quantity": 1
+    }
+  ],
+  "discount_percent": 0,
+  "tax_percent": 11,
+  "shipping_fee": 15000,
+  "amount_paid": 100000
+}

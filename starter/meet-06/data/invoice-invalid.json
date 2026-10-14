@@ -1,0 +1,19 @@
+{
+  "invoice_number": "INV-2026-0004",
+  "customer": {
+    "name": "Rina",
+    "type": "regular"
+  },
+  "items": [
+    {
+      "sku": "",
+      "name": "Broken Item",
+      "unit_price": -5000,
+      "quantity": 0
+    }
+  ],
+  "discount_percent": 120,
+  "tax_percent": 11,
+  "shipping_fee": -1,
+  "amount_paid": 0
+}
