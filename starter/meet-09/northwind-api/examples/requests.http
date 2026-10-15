@@ -1,0 +1,63 @@
+@baseUrl = http://localhost:8080
+
+### Health
+GET {{baseUrl}}/health
+
+### Product: daftar
+GET {{baseUrl}}/api/products
+
+### Product: detail Northwind
+GET {{baseUrl}}/api/products/1
+
+### Category: buat sebelum product
+POST {{baseUrl}}/api/categories
+Content-Type: application/json
+
+{"category_id":30000,"category_name":"Workshop","description":"Kategori latihan"}
+
+### Category: daftar
+GET {{baseUrl}}/api/categories
+
+### Category: detail
+GET {{baseUrl}}/api/categories/30000
+
+### Category: ubah
+PUT {{baseUrl}}/api/categories/30000
+Content-Type: application/json
+
+{"category_name":"Workshop Baru","description":"Kategori latihan diperbarui"}
+
+### Product: buat
+POST {{baseUrl}}/api/products
+Content-Type: application/json
+
+{"product_id":30000,"product_name":"Produk Workshop","category_id":30000,"supplier_id":null,"unit_price":10,"units_in_stock":20,"discontinued":0}
+
+### Product: ubah (PUT mengganti semua field yang dikelola API)
+PUT {{baseUrl}}/api/products/30000
+Content-Type: application/json
+
+{"product_name":"Produk Workshop Baru","category_id":30000,"supplier_id":null,"unit_price":12.5,"units_in_stock":30,"discontinued":0}
+
+### Category: masih dipakai product; diharapkan 409
+DELETE {{baseUrl}}/api/categories/30000
+
+### Product: hapus data latihan; diharapkan 204
+DELETE {{baseUrl}}/api/products/30000
+
+### Category: hapus setelah product; diharapkan 204
+DELETE {{baseUrl}}/api/categories/30000
+
+### Order: daftar
+GET {{baseUrl}}/api/orders
+
+### Order: buat menggunakan produk dataset Northwind
+# Mengurangi stok nyata. Jalankan sekali, sesuaikan ID order jika sudah dipakai.
+# Produk 1 dan 2 harus tersedia, aktif, dan stok cukup.
+POST {{baseUrl}}/api/orders
+Content-Type: application/json
+
+{"order_id":30000,"customer_id":"ALFKI","items":[{"product_id":1,"quantity":2,"discount":0},{"product_id":2,"quantity":3,"discount":0.1}]}
+
+### Order: detail
+GET {{baseUrl}}/api/orders/30000
