@@ -1,0 +1,6 @@
+.env
+.env.*
+!.env.example
+/northwind-api
+*.test
+coverage.out
