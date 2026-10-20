@@ -38,6 +38,15 @@ func ID(w http.ResponseWriter, r *http.Request) (int, bool) {
 	return id, true
 }
 
+func IDString(w http.ResponseWriter, r *http.Request) (string, bool) {
+	id := r.PathValue("id")
+	if id == "" {
+		Error(w, http.StatusBadRequest, "INVALID_ID", "ID must not be empty")
+		return "", false
+	}
+	return id, true
+}
+
 func Decode(w http.ResponseWriter, r *http.Request, value any) bool {
 	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	decoder := json.NewDecoder(r.Body)

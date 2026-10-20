@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"northwind-api/internal/category"
+	"northwind-api/internal/customers"
 	"northwind-api/internal/database"
 	"northwind-api/internal/httpjson"
 	"northwind-api/internal/order"
@@ -67,11 +68,15 @@ func newMux(db *sql.DB) *http.ServeMux {
 	orderRepo := order.NewRepository(db)
 	orderService := order.NewService(orderRepo)
 	orderHandler := order.NewHandler(orderService)
+	customerRepo := customers.NewRepository(db)
+	customerService := customers.NewService(customerRepo)
+	customerHandler := customers.NewHandler(customerService)
 
 	mux := http.NewServeMux()
 	product.RegisterRoutes(mux, productHandler)
 	category.RegisterRoutes(mux, categoryHandler)
 	order.RegisterRoutes(mux, orderHandler)
+	customers.RegisterRoutes(mux, customerHandler)
 
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		httpjson.Data(w, http.StatusOK, map[string]string{"status": "ok"})
