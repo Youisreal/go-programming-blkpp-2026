@@ -17,7 +17,7 @@ import (
 
 func TestRejectInvalidName(t *testing.T) {
 	r := gin.New()
-	RegisterRoutes(r.Group("/api/private"), nil)
+	RegisterRoutes(r.Group("/api/private"), NewHandler(NewService(NewRepository(nil))))
 	for _, body := range []string{`{`, `{}`, `{"name":"   "}`, `{"name":"` + strings.Repeat("a", 101) + `"}`} {
 		w := httptest.NewRecorder()
 		req := httptest.NewRequest("POST", "/api/private/products", strings.NewReader(body))
@@ -61,7 +61,7 @@ func TestProductRelation(t *testing.T) {
 	r := gin.New()
 	currentUser := user
 	group := r.Group("/api/private", func(c *gin.Context) { c.Set("user", currentUser) })
-	RegisterRoutes(group, db)
+	RegisterRoutes(group, NewHandler(NewService(NewRepository(db))))
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest("POST", "/api/private/products", strings.NewReader(`{"name":" Buku ","user_id":0}`))
 	req.Header.Set("Content-Type", "application/json")
