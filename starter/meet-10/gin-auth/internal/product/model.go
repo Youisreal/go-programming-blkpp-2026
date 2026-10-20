@@ -13,3 +13,7 @@ type Product struct {
 	User      auth.User `json:"user" gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+type UpdateProductRequest struct {
+	Name string `json:"name" gorm:"not null;size:100"`
+}
