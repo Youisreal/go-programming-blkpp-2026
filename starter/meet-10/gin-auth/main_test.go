@@ -25,6 +25,10 @@ func TestPublicRoutes(t *testing.T) {
 		status                   int
 	}{
 		{"GET", "/health", "", "health", http.StatusOK},
+		{"GET", "/api/public/info", "", "public.info", http.StatusOK},
+		{"GET", "/api/private/profile", "", "", http.StatusUnauthorized},
+		{"GET", "/api/private/products", "", "", http.StatusUnauthorized},
+		{"POST", "/api/private/products", `{}`, "", http.StatusUnauthorized},
 		{"POST", "/api/auth/register", `{}`, "auth.register", http.StatusBadRequest},
 		{"POST", "/api/auth/login", `{}`, "auth.login", http.StatusBadRequest},
 		{"GET", "/api/me", "", "auth.me", http.StatusUnauthorized},
@@ -123,8 +127,13 @@ func TestAuthFlow(t *testing.T) {
 	if err := json.Unmarshal(w.Body.Bytes(), &profile); err != nil || profile.Data.ID != user.ID || profile.Data.Email != user.Email {
 		t.Fatalf("Profil salah: %s", w.Body.String())
 	}
+	w = request(t, "GET", "/api/private/profile", "", "Bearer "+login.Data.AccessToken, http.StatusOK, "private.profile")
+	if err := json.Unmarshal(w.Body.Bytes(), &profile); err != nil || profile.Data.ID != user.ID {
+		t.Fatalf("Profil private salah: %s", w.Body.String())
+	}
 	for _, header := range []string{"", "Bearer", "Basic abc", "Bearer invalid", "Bearer abc def"} {
 		request(t, "GET", "/api/me", "", header, http.StatusUnauthorized, "auth.me")
+		request(t, "GET", "/api/private/profile", "", header, http.StatusUnauthorized, "")
 	}
 
 	valid := jwt.RegisteredClaims{

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,8 +11,12 @@ import (
 	"gin-auth/internal/auth"
 	"gin-auth/internal/database"
 	"gin-auth/internal/middleware"
+	"gin-auth/internal/private"
+	"gin-auth/internal/product"
+	"gin-auth/internal/public"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"gorm.io/gorm"
 )
 
@@ -28,10 +33,15 @@ func setupEngine(db *gorm.DB, secret []byte) *gin.Engine {
 	service := auth.NewService(repo, secret)
 	handler := auth.NewHandler(service)
 	auth.RegisterRoutes(r, handler)
+	public.RegisterRoutes(r)
+	private.RegisterRoutes(r, handler.RequireAuth(), db)
 	return r
 }
 
 func run() error {
+	if err := godotenv.Load(); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("load .env: %w", err)
+	}
 	secret := []byte(os.Getenv("JWT_SECRET"))
 	if len(secret) < 32 {
 		return fmt.Errorf("JWT_SECRET wajib diisi minimal 32 byte")
@@ -45,8 +55,8 @@ func run() error {
 		return err
 	}
 	defer conn.Close()
-	if err := db.AutoMigrate(&auth.User{}); err != nil {
-		return fmt.Errorf("migrasi tabel users gagal: %w", err)
+	if err := db.AutoMigrate(&auth.User{}, &product.Product{}); err != nil {
+		return fmt.Errorf("migrasi tabel users/products gagal: %w", err)
 	}
 	port := os.Getenv("PORT")
 	if port == "" {
