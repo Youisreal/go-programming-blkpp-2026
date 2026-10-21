@@ -14,8 +14,8 @@ func NewService(repo *Repository) *Service {
 	return &Service{repo: repo}
 }
 
-func (s *Service) Create(ctx context.Context, name string, user auth.User) (Product, error) {
-	item := Product{Name: strings.TrimSpace(name), UserID: user.ID}
+func (s *Service) Create(ctx context.Context, name string, stock int, price int, user auth.User) (Product, error) {
+	item := Product{Name: strings.TrimSpace(name), Stock: stock, Price: price, UserID: user.ID}
 	if err := s.repo.Create(ctx, &item); err != nil {
 		return Product{}, err
 	}

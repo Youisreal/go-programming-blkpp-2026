@@ -31,8 +31,8 @@ func (s *Service) Detail(ctx context.Context, userID uint, productID uint) (Prod
 	return s.repo.DetailProduct(ctx, userID, productID)
 }
 
-func (s *Service) Update(ctx context.Context, userID uint, productID uint, dataProduct UpdateProductRequest) (Product, error) {
-	return s.repo.UpdateProduct(ctx, userID, productID, dataProduct)
+func (s *Service) Update(ctx context.Context, userID uint, productID uint, categoryID uint, dataProduct UpdateProductRequest) (Product, error) {
+	return s.repo.UpdateProduct(ctx, userID, productID, categoryID, dataProduct)
 }
 
 func (s *Service) Delete(ctx context.Context, userID uint, productID uint) error {

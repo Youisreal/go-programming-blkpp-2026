@@ -19,14 +19,18 @@ func NewHandler(service *Service) *Handler {
 
 func (h *Handler) Create(c *gin.Context) {
 	var input struct {
-		Name string `json:"name" binding:"required,max=100"`
+		Name  string `json:"name" binding:"required,max=100"`
+		Stock int    `json:"stock" binding:"required,gt=0"`
+		Price int    `json:"price" binding:"required,gt=0"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil || strings.TrimSpace(input.Name) == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Nama product wajib diisi, maksimal 100 karakter"})
 		return
 	}
+
 	user := c.MustGet("user").(auth.User)
-	item, err := h.service.Create(c.Request.Context(), input.Name, user)
+
+	item, err := h.service.Create(c.Request.Context(), input.Name, input.Stock, input.Price, user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan product"})
 		return
