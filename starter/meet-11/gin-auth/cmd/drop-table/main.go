@@ -12,7 +12,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func run(tableName string, confirm bool) error {
+func run(confirm bool) error {
 	if !confirm {
 		return errors.New("penghapusan dibatalkan; gunakan -confirm untuk menghapus tabel " + tableName + " beserta seluruh datanya")
 	}
@@ -30,18 +30,17 @@ func run(tableName string, confirm bool) error {
 	defer conn.Close()
 
 	// Driver PostgreSQL GORM memakai CASCADE: dependency seperti foreign key ikut dihapus.
-	if err := db.Migrator().DropTable(tableName); err != nil {
-		return fmt.Errorf("hapus tabel categories gagal: %w", tableName, err)
+	if err := db.Migrator().DropTable("categories"); err != nil {
+		return fmt.Errorf("hapus tabel categories gagal: %w", err)
 	}
 	log.Printf("Tabel %s sudah tidak ada", tableName)
 	return nil
 }
 
 func main() {
-	tableName := flag.String("table", "", "nama tabel yang akan dihapus")
 	confirm := flag.Bool("confirm", false, "hapus tabel categories beserta seluruh data dan dependency (CASCADE)")
 	flag.Parse()
-	if err := run(*tableName, *confirm); err != nil {
+	if err := run(*confirm); err != nil {
 		log.Fatal(err)
 	}
 }
