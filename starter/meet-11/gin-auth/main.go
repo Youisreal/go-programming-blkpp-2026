@@ -12,6 +12,7 @@ import (
 	"gin-auth/internal/category"
 	"gin-auth/internal/database"
 	"gin-auth/internal/middleware"
+	"gin-auth/internal/orders"
 	"gin-auth/internal/private"
 	"gin-auth/internal/product"
 	"gin-auth/internal/public"
@@ -69,6 +70,8 @@ func run() error {
 		&auth.User{},
 		&product.Product{},
 		&category.Category{},
+		&orders.Orders{},
+		&orders.Order_detail{},
 	); err != nil {
 		return fmt.Errorf("migrasi tabel users/products gagal: %w", err)
 	}
