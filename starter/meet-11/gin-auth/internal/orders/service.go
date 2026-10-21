@@ -17,7 +17,13 @@ type Service struct{ repo *Repository }
 
 func NewService(repo *Repository) *Service { return &Service{repo: repo} }
 
-func (s *Service) Create(ctx context.Context, productID uint, quantity int, user auth.User) (Order, error) {
+func (s *Service) Create(
+	ctx context.Context,
+	productID uint,
+	quantity int,
+	user auth.User,
+) (Order, error) {
+	// validasi input
 	if productID == 0 || quantity <= 0 || user.ID == 0 {
 		return Order{}, ErrInvalidOrder
 	}
@@ -29,6 +35,15 @@ func orderTotal(price, quantity int) (int, error) {
 		return 0, ErrInvalidOrder
 	}
 	return price * quantity, nil
+}
+
+func taxSubtotal(total int) (int, error) {
+	if total < 0 {
+		return 0, ErrInvalidOrder
+	}
+	tax := int(float64(total) * 0.11)
+	subtotal := total + tax
+	return subtotal, nil
 }
 
 func (s *Service) List(ctx context.Context, userID uint) ([]Order, error) {
