@@ -37,13 +37,6 @@ func setupEngine(db *gorm.DB, secret []byte) *gin.Engine {
 	}))
 
 	r.Use(func(c *gin.Context) {
-		// Cookie dikirim otomatis; request yang mengubah data harus berasal dari client.
-		if _, err := c.Cookie("access_token"); err == nil && c.Request.Method != http.MethodGet && c.Request.Method != http.MethodHead && c.Request.Method != http.MethodOptions {
-			if c.GetHeader("Origin") != "http://localhost:8081" {
-				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Origin tidak diizinkan"})
-				return
-			}
-		}
 		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 1<<20)
 		c.Next()
 	})

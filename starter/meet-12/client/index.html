@@ -51,9 +51,10 @@
           <button id="refresh" class="btn btn-outline-primary btn-sm" type="button">Muat order</button>
         </div>
         <div class="table-responsive">
-          <table class="table table-striped table-hover align-middle mb-0">
-            <thead class="table-light"><tr><th scope="col">ID</th><th scope="col">Tanggal</th><th scope="col">Total</th><th scope="col">Detail</th></tr></thead>
-            <tbody id="orders"><tr><td colspan="4" class="text-center text-body-secondary py-4">Login lalu muat order.</td></tr></tbody>
+          <table id="orders" class="table align-middle mb-0">
+            <caption class="caption-top">Nota pesanan beserta rincian produk dan grand total.</caption>
+            <thead class="table-light"><tr><th scope="col">Produk</th><th scope="col">Jumlah</th><th scope="col">Harga satuan</th><th scope="col">Subtotal</th></tr></thead>
+            <tbody><tr><td colspan="4" class="text-center text-body-secondary py-4">Login lalu muat order.</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -88,16 +89,33 @@
       $('status').className = `alert ${error ? 'alert-danger' : 'alert-info'} text-break`;
     }
 
+    function saveToken(token, maxAge = 0) {
+      document.cookie = `client_access_token=${encodeURIComponent(token)}; Path=/; Max-Age=${maxAge}; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
+    }
+
+    function readToken() {
+      const cookie = document.cookie.split('; ').find((entry) => entry.startsWith('client_access_token='));
+      try {
+        return cookie ? decodeURIComponent(cookie.slice('client_access_token='.length)) : '';
+      } catch {
+        return '';
+      }
+    }
+
     async function request(path, body) {
       const headers = {};
+      const token = readToken();
+      if (token) headers.Authorization = `Bearer ${token}`;
       if (body !== undefined) headers['Content-Type'] = 'application/json';
+
       const response = await fetch(`${API_URL}${path}`, {
-        method: body === undefined ? 'GET' : 'POST', headers, credentials: 'include',
+        method: body === undefined ? 'GET' : 'POST', headers, credentials: 'omit',
         body: body === undefined ? undefined : JSON.stringify(body),
         signal: AbortSignal.timeout(15000)
       });
       const result = await response.json();
       if (!response.ok) {
+        if (response.status === 401) saveToken('');
         throw new Error(result.error || `HTTP ${response.status}`);
       }
       return result.data;
@@ -135,16 +153,29 @@
       return items;
     }
 
-    async function loadOrders() {
-      const orders = await request('/api/private/orders');
-      $('orders').replaceChildren();
-      for (const order of orders || []) {
+    function renderOrders(orders) {
+      const table = $('orders');
+      const heading = table.querySelector('thead');
+      const caption = table.querySelector('caption');
+      table.replaceChildren(caption, heading);
+      if (!orders.length) {
         const row = document.createElement('tr');
-        for (const value of [order.id, new Date(order.created_at).toLocaleString('id-ID'), rupiah.format(order.grand_total)]) {
-          const cell = document.createElement('td');
-          cell.textContent = value;
-          row.append(cell);
-        }
+        const cell = document.createElement('td');
+        cell.colSpan = 4;
+        cell.textContent = 'Belum ada order.';
+        row.append(cell);
+        const group = document.createElement('tbody');
+        group.append(row);
+        table.append(group);
+      }
+      for (const order of orders) {
+        const row = document.createElement('tr');
+        row.className = 'table-light';
+        const heading = document.createElement('th');
+        heading.scope = 'rowgroup';
+        heading.colSpan = 3;
+        heading.textContent = `Nota #${order.id} · ${new Date(order.created_at).toLocaleString('id-ID')}`;
+        row.append(heading);
         const cell = document.createElement('td');
         const button = document.createElement('button');
         button.textContent = 'Lihat';
@@ -156,8 +187,34 @@
         });
         cell.append(button);
         row.append(cell);
-        $('orders').append(row);
+        const group = document.createElement('tbody');
+        group.append(row);
+        for (const item of order.order_details || []) {
+          const itemRow = document.createElement('tr');
+          for (const value of [item.product?.name || `Produk #${item.product_id}`, item.qty, rupiah.format(item.price), rupiah.format(item.subtotal)]) {
+            const cell = document.createElement('td');
+            cell.textContent = value;
+            itemRow.append(cell);
+          }
+          group.append(itemRow);
+        }
+        const totalRow = document.createElement('tr');
+        totalRow.className = 'fw-bold';
+        const label = document.createElement('th');
+        label.scope = 'row';
+        label.colSpan = 3;
+        label.textContent = 'Grand total';
+        const total = document.createElement('td');
+        total.textContent = rupiah.format(order.grand_total);
+        totalRow.append(label, total);
+        group.append(totalRow);
+        $('orders').append(group);
       }
+    }
+
+    async function loadOrders() {
+      const orders = await request('/api/private/orders');
+      renderOrders(orders || []);
       status(orders?.length ? `${orders.length} order dimuat.` : 'Belum ada order.');
     }
 
@@ -165,14 +222,18 @@
       event.preventDefault();
       run(event.submitter, async () => {
         const form = new FormData(event.target);
-        await request('/api/auth/login', { email: form.get('email'), password: form.get('password') });
+        const data = await request('/api/auth/login', { email: form.get('email'), password: form.get('password') });
+        if (typeof data?.access_token !== 'string' || !data.access_token || !Number.isSafeInteger(data.expires_in) || data.expires_in <= 0) {
+          throw new Error('Respons token login tidak valid.');
+        }
+        saveToken(data.access_token, data.expires_in);
         event.target.reset();
         await loadOrders();
       });
     };
     $('logout').onclick = () => run($('logout'), async () => {
-      await request('/api/auth/logout', {});
-      $('orders').replaceChildren();
+      saveToken('');
+      renderOrders([]);
       $('detail').textContent = 'Pilih order dari daftar.';
       status('Sudah keluar.');
     });

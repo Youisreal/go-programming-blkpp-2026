@@ -33,29 +33,17 @@ func TestClientCORS(t *testing.T) {
 	}
 }
 
-func TestCookieOrigin(t *testing.T) {
+func TestCookieLogoutWithoutOrigin(t *testing.T) {
 	router := setupEngine(nil, []byte("test-secret"))
-	for _, origin := range []string{"", "http://localhost:8081", "http://localhost:8082", "https://example.com"} {
-		req := httptest.NewRequest(http.MethodPost, "/api/auth/logout", nil)
-		req.AddCookie(&http.Cookie{Name: "access_token", Value: "test-token"})
-		if origin != "" {
-			req.Header.Set("Origin", origin)
-		}
-		w := httptest.NewRecorder()
-		router.ServeHTTP(w, req)
-		want := http.StatusForbidden
-		if origin == "http://localhost:8081" {
-			want = http.StatusOK
-			if w.Header().Get("Access-Control-Allow-Credentials") != "true" {
-				t.Fatal("Cookie harus diizinkan untuk client")
-			}
-			cookies := w.Result().Cookies()
-			if len(cookies) != 1 || cookies[0].MaxAge != -1 {
-				t.Fatal("Logout harus menghapus cookie")
-			}
-		}
-		if w.Code != want {
-			t.Fatalf("Origin %q: status %d, ingin %d", origin, w.Code, want)
-		}
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/logout", nil)
+	req.AddCookie(&http.Cookie{Name: "access_token", Value: "test-token"})
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("Logout tanpa Origin: status %d, ingin %d", w.Code, http.StatusOK)
+	}
+	cookies := w.Result().Cookies()
+	if len(cookies) != 1 || cookies[0].Name != "access_token" || cookies[0].MaxAge != -1 {
+		t.Fatal("Logout harus menghapus cookie")
 	}
 }
