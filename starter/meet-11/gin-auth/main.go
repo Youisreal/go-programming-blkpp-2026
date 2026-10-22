@@ -41,7 +41,11 @@ func setupEngine(db *gorm.DB, secret []byte) *gin.Engine {
 	productService := product.NewService(productRepo)
 	productHandler := product.NewHandler(productService)
 
-	private.RegisterRoutes(r, handler.RequireAuth(), productHandler)
+	ordersRepo := orders.NewRepository(db)
+	ordersService := orders.NewService(ordersRepo)
+	ordersHandler := orders.NewHandler(ordersService)
+
+	private.RegisterRoutes(r, handler.RequireAuth(), productHandler, ordersHandler)
 	return r
 }
 
@@ -70,8 +74,8 @@ func run() error {
 		&auth.User{},
 		&product.Product{},
 		&category.Category{},
-		&orders.Orders{},
-		&orders.Order_detail{},
+		&orders.Order{},
+		&orders.OrderDetail{},
 	); err != nil {
 		return fmt.Errorf("migrasi tabel users/products gagal: %w", err)
 	}

@@ -25,4 +25,5 @@ type OrderDetail struct {
 	Product   product.Product `json:"product" gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;"`
 	Qty       int             `json:"qty" gorm:"not null;default:0"`
 	Price     int             `json:"price" gorm:"not null;default:0"`
+	SubTotal  int             `json:"sub_total" gorm:"not null;default:0"`
 }

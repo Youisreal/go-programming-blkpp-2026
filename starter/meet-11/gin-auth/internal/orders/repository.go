@@ -28,7 +28,14 @@ func (r *Repository) Create(ctx context.Context, productID uint, quantity int, u
 			return ErrInsufficientStock
 		}
 
-		total, err := orderTotal(item.Price, quantity)
+		price := int(item.Price)
+
+		total, err := orderTotal(price, quantity)
+		if err != nil {
+			return err
+		}
+
+		subTotalWithTax, err := taxSubtotal(total)
 		if err != nil {
 			return err
 		}
@@ -37,7 +44,7 @@ func (r *Repository) Create(ctx context.Context, productID uint, quantity int, u
 			return err
 		}
 
-		detail := OrderDetail{OrderID: order.ID, ProductID: item.ID, Qty: quantity, Price: item.Price}
+		detail := OrderDetail{OrderID: order.ID, ProductID: item.ID, Qty: quantity, Price: item.Price, SubTotal: subTotalWithTax}
 		if err := tx.Create(&detail).Error; err != nil {
 			return err
 		}
