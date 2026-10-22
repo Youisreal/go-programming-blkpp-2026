@@ -41,11 +41,17 @@ func setupEngine(db *gorm.DB, secret []byte) *gin.Engine {
 	productService := product.NewService(productRepo)
 	productHandler := product.NewHandler(productService)
 
+<<<<<<< HEAD
 	ordersRepo := orders.NewRepository(db)
 	ordersService := orders.NewService(ordersRepo)
 	ordersHandler := orders.NewHandler(ordersService)
 
 	private.RegisterRoutes(r, handler.RequireAuth(), productHandler, ordersHandler)
+=======
+	private.RegisterRoutes(r, handler.RequireAuth(), productHandler)
+	orderHandler := orders.NewHandler(orders.NewService(orders.NewRepository(db)))
+	orders.RegisterRoutes(r.Group("/api/private", handler.RequireAuth()), orderHandler)
+>>>>>>> efe0f2aefaad664f682bc23304654db574d83c45
 	return r
 }
 
