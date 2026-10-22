@@ -32,7 +32,10 @@ func main() {
 	}
 
 	for _, item := range category.DefaultCategories {
-		result := db.Where(category.Category{Name: item.Name}).FirstOrCreate(&item)
+		result := db.Where(
+			category.Category{Name: item.Name},
+		).FirstOrCreate(&item)
+
 		if result.Error != nil {
 			log.Fatal(fmt.Errorf("seed kategori %q gagal: %w", item.Name, result.Error))
 		}

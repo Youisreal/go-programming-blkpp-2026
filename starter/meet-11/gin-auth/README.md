@@ -1,8 +1,9 @@
 # Gin Auth + GORM
 
-Project API autentikasi dan product dengan Gin, GORM, Neon PostgreSQL, bcrypt,
+Project API autentikasi, product, dan order dengan Gin, GORM, Neon PostgreSQL, bcrypt,
 dan JWT HS256. Modul auth memakai Handler, Service, Repository; modul product
-memakai model dan route handler. Tabel `users` dan `products` dibuat otomatis
+memakai model dan route handler. Tabel `users`, `categories`, `products`, `orders`,
+dan `order_details` dibuat otomatis
 lewat `AutoMigrate` ketika server dimulai.
 
 ## Menjalankan
@@ -59,7 +60,8 @@ atau migrasi gagal; tidak ada fallback ke database lain.
 ## Endpoint dan middleware
 
 Semua request melewati logger, recovery, serta pembatas body 1 MiB.
-Setiap endpoint memiliki hook `MockEndpoint` sendiri di `internal/middleware/mock.go`.
+Endpoint dengan nilai header pada tabel memakai hook `MockEndpoint` di
+`internal/middleware/mock.go`. Endpoint order belum memakai hook tersebut.
 
 | Method | Endpoint | Header `X-Mock-Middleware` | Auth |
 | --- | --- | --- | --- |
@@ -71,6 +73,9 @@ Setiap endpoint memiliki hook `MockEndpoint` sendiri di `internal/middleware/moc
 | GET | `/api/private/profile` | `private.profile` | Bearer JWT |
 | POST | `/api/private/products` | `private.products.create` | Bearer JWT |
 | GET | `/api/private/products` | `private.products.list` | Bearer JWT |
+| POST | `/api/private/orders` | Tidak ada | Bearer JWT |
+| GET | `/api/private/orders` | Tidak ada | Bearer JWT |
+| GET | `/api/private/orders/:id` | Tidak ada | Bearer JWT |
 
 Modul `internal/public/routes.go` menyediakan grup `/api/public` tanpa auth.
 `GET /api/public/info` mengembalikan `200` dengan:
@@ -246,6 +251,125 @@ yang sedang login, maksimal 100 terbaru berdasarkan ID. Jika kosong: `{"data":[]
 Kegagalan membaca database mendapat `500`. Kedua endpoint mendapat `401` jika
 auth tidak valid. Update/delete product belum disediakan.
 
+## API order
+
+Semua endpoint order wajib memakai `Authorization: Bearer <access_token>`.
+Route dirakit di `main.go` dan terdaftar di `internal/orders/routes.go`.
+
+| Method | Endpoint | Respons berhasil | Respons gagal |
+| --- | --- | --- | --- |
+| POST | `/api/private/orders` | `201`, `{"data":{...}}` berisi order dan detail | `400` input salah/stok kurang/total tidak valid, `401` auth tidak valid, `404` product tidak ditemukan, `500` gagal membuat order atau membaca pengguna |
+| GET | `/api/private/orders` | `200`, `{"data":[...]}` berisi order pengguna login | `401` auth tidak valid, `500` gagal membaca order atau pengguna |
+| GET | `/api/private/orders/:id` | `200`, `{"data":{...}}` berisi satu order pengguna login | `400` ID tidak valid, `401` auth tidak valid, `404` order tidak ditemukan atau milik pengguna lain, `500` gagal membaca order atau pengguna |
+
+### Membuat order product
+
+Satu request membuat satu order dengan satu baris `order_details`.
+Kirim `Content-Type: application/json` dan body berikut:
+
+| Field | Tipe | Aturan |
+| --- | --- | --- |
+| `product_id` | integer | Wajib, ID product yang sudah tersedia, lebih dari 0 |
+| `quantity` | integer | Wajib, minimal 1, tidak melebihi stok |
+
+`user_id` diambil dari pengguna login. Harga diambil dari database, bukan body.
+`quantity` disimpan sebagai `order_details[].qty`; `price` menyimpan harga satuan
+saat pembelian dan `total` dihitung dari `price * qty`. Total yang melampaui
+kapasitas tipe `int` ditolak dengan `400`.
+
+Product dikunci selama transaksi agar pembelian bersamaan tidak menghabiskan stok
+yang sama. Pembuatan order, detail, dan pengurangan stok berlangsung dalam satu
+transaksi; kegagalan membatalkan seluruh perubahan. Product dapat dipesan tanpa
+harus dimiliki pembeli. Perubahan harga product setelah pembelian tidak mengubah
+harga pada detail order.
+
+```bash
+TOKEN='<access_token dari login>'
+
+# Siapkan product dengan stok dan harga, lalu gunakan ID dari respons.
+curl -i -X POST http://localhost:8080/api/private/products \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Buku Go","stock":10,"price":15000}'
+
+curl -i -X POST http://localhost:8080/api/private/orders \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"product_id":1,"quantity":2}'
+```
+
+Respons create dan detail order memuat field berikut:
+
+| Field | Keterangan |
+| --- | --- |
+| `data.id` | ID order |
+| `data.user_id`, `data.user` | ID dan profil pembeli tanpa password/hash |
+| `data.created_at` | Waktu order dibuat |
+| `data.total` | Total harga order |
+| `data.order_details` | Array detail order |
+| `data.order_details[].id`, `order_id` | ID detail dan ID order induk |
+| `data.order_details[].product_id`, `product` | ID dan objek product saat respons dibaca; objek product bukan snapshot pembelian |
+| `data.order_details[].qty`, `price` | Jumlah dibeli dan harga satuan saat pembelian |
+
+Cuplikan respons `201` berikut menghilangkan objek `user` dan `product` agar ringkas.
+ID dan waktu hanya ilustrasi; contoh pembelian mengurangi stok dari 10 menjadi 8.
+
+```json
+{
+  "data": {
+    "id": 1,
+    "user_id": 1,
+    "created_at": "2026-10-21T10:00:00Z",
+    "total": 30000,
+    "order_details": [
+      {
+        "id": 1,
+        "order_id": 1,
+        "product_id": 1,
+        "qty": 2,
+        "price": 15000
+      }
+    ]
+  }
+}
+```
+
+### Membaca order
+
+```bash
+curl -i http://localhost:8080/api/private/orders \
+  -H "Authorization: Bearer $TOKEN"
+
+curl -i http://localhost:8080/api/private/orders/1 \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Daftar hanya memuat order pengguna login, diurutkan berdasarkan ID terbaru,
+tanpa pagination. Setiap elemen memiliki bentuk sama dengan respons create.
+Jika kosong, respons `200` berupa `{"data":[]}`. Detail order milik pengguna lain
+mengembalikan `404`, sama seperti ID yang tidak ditemukan.
+
+Semua error memakai format `{"error":"pesan"}`. Contoh pesan dari handler order:
+
+| Status | Kondisi | Pesan |
+| --- | --- | --- |
+| `400` | Body tidak valid atau field wajib tidak sesuai | `Product ID dan Quantity wajib diisi, Quantity minimal 1` |
+| `400` | Stok kurang | `stok product tidak cukup` |
+| `400` | Validasi service atau perhitungan total ditolak | `product_id dan quantity harus lebih dari 0` |
+| `400` | Parameter ID order tidak valid | `ID order wajib diisi` |
+| `401` | Token hilang, salah, atau kedaluwarsa | `Token tidak valid atau kedaluwarsa` |
+| `404` | Product tidak ditemukan saat create | `Product tidak ditemukan` |
+| `404` | Order tidak ditemukan atau bukan milik pembeli | `Order tidak ditemukan` |
+| `500` | Transaksi create gagal | `Gagal membuat order` |
+| `500` | Query daftar/detail gagal | `Gagal membaca order` |
+
+Model `Order` memakai tabel `orders`; `OrderDetail` memakai `order_details`.
+Relasi: `orders.user_id` ke `users.id`, `order_details.order_id` ke `orders.id`,
+dan `order_details.product_id` ke `products.id`. Foreign key memakai
+`ON DELETE RESTRICT`. Kedua model dimigrasikan otomatis saat startup.
+API belum menyediakan order banyak product dalam satu request, update, pembatalan,
+penghapusan, pembayaran, atau pengembalian stok.
+
 ## Menjalankan test
 
 ```bash
@@ -272,6 +396,10 @@ Test integrasi menjalankan migrasi tabel `users` dan `products`, register/login/
 hash password, email duplikat, serta pembacaan lewat koneksi PostgreSQL terpisah.
 Test product memeriksa pembuat dari konteks auth, pemuatan relasi `User`,
 pembatasan daftar per pengguna, dan foreign key yang menolak penghapusan pembuat.
+Test order tanpa database memeriksa validasi input dan overflow total. Test
+integrasi order memigrasikan model terkait, memeriksa penyimpanan detail/total,
+pengurangan stok, penolakan stok kurang tanpa order tambahan, dan isolasi akses
+antar pengguna. Data order test dibersihkan sebelum product dan pengguna.
 Pengguna test memakai email unik; product dibersihkan sebelum pengguna setelah test.
 Test integrasi dilewati
 jika `TEST_DATABASE_URL` kosong; keberhasilan test tanpa URL bukan bukti koneksi Neon.
@@ -288,6 +416,7 @@ jika `TEST_DATABASE_URL` kosong; keberhasilan test tanpa URL bukan bukti koneksi
 | `internal/public/routes.go` | Grup API publik tanpa middleware auth |
 | `internal/private/routes.go` | Grup API private dengan middleware auth |
 | `internal/product/` | Model relasi GORM, endpoint create/list product, dan test |
+| `internal/orders/` | Model Order/OrderDetail, transaksi pembelian, endpoint create/list/detail, dan test |
 | `internal/database/` | Validasi URL/TLS dan pool koneksi PostgreSQL |
 | `internal/middleware/mock.go` | Header hook berbeda untuk setiap endpoint |
 | `*_test.go` | Unit test dan test integrasi PostgreSQL |
