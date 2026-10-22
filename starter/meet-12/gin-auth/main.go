@@ -17,6 +17,8 @@ import (
 	"gin-auth/internal/product"
 	"gin-auth/internal/public"
 
+	"github.com/gin-contrib/cors"
+
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"gorm.io/gorm"
@@ -25,7 +27,23 @@ import (
 func setupEngine(db *gorm.DB, secret []byte) *gin.Engine {
 	r := gin.Default()
 
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:8081"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
 	r.Use(func(c *gin.Context) {
+		// Cookie dikirim otomatis; request yang mengubah data harus berasal dari client.
+		if _, err := c.Cookie("access_token"); err == nil && c.Request.Method != http.MethodGet && c.Request.Method != http.MethodHead && c.Request.Method != http.MethodOptions {
+			if c.GetHeader("Origin") != "http://localhost:8081" {
+				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Origin tidak diizinkan"})
+				return
+			}
+		}
 		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 1<<20)
 		c.Next()
 	})

@@ -14,12 +14,20 @@ func (h *Handler) RequireAuth() gin.HandlerFunc {
 			c.Header("WWW-Authenticate", "Bearer")
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Token tidak valid atau kedaluwarsa"})
 		}
-		parts := strings.Fields(c.GetHeader("Authorization"))
-		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+		token, _ := c.Cookie("access_token")
+		if header := c.GetHeader("Authorization"); header != "" {
+			parts := strings.Fields(header)
+			if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+				unauthorized()
+				return
+			}
+			token = parts[1]
+		}
+		if token == "" {
 			unauthorized()
 			return
 		}
-		user, err := h.service.Authenticate(c.Request.Context(), parts[1])
+		user, err := h.service.Authenticate(c.Request.Context(), token)
 		if errors.Is(err, ErrInvalidToken) {
 			unauthorized()
 			return

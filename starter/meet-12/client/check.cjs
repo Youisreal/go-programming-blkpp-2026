@@ -14,7 +14,8 @@ const context = vm.createContext({
   fetch: async (path, options) => {
     assert.equal(path, 'http://localhost:8080/api/private/orders');
     assert.equal(options.method, 'POST');
-    assert.equal(options.headers.Authorization, 'Bearer test-token');
+    assert.equal(options.credentials, 'include');
+    assert.equal(options.headers.Authorization, undefined);
     assert.deepEqual(JSON.parse(options.body), { items: [{ product_id: 7, quantity: 2 }] });
     return { ok: true, json: async () => ({ data: { id: 42 } }) };
   }
@@ -28,6 +29,6 @@ node('items').children.push(item('7', '1'));
 assert.throws(() => vm.runInContext('readItems()', context), /duplikat/);
 node('items').children = [item('0', '2')];
 assert.throws(() => vm.runInContext('readItems()', context), /positif/);
-vm.runInContext("token = 'test-token'; request('/api/private/orders', { items: [{ product_id: 7, quantity: 2 }] })", context)
+vm.runInContext("request('/api/private/orders', { items: [{ product_id: 7, quantity: 2 }] })", context)
   .then((order) => { assert.equal(order.id, 42); console.log('Validasi item dan request order: OK'); })
   .catch((error) => { console.error(error); process.exitCode = 1; });

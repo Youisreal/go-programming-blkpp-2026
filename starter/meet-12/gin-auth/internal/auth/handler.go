@@ -53,6 +53,7 @@ func (h *Handler) Login(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memproses login"})
 		return
 	}
+	setAuthCookie(c, token, 3600)
 	c.JSON(http.StatusOK, gin.H{"data": gin.H{
 		"access_token": token, "token_type": "Bearer", "expires_in": 3600,
 	}})
@@ -60,4 +61,14 @@ func (h *Handler) Login(c *gin.Context) {
 
 func (h *Handler) Me(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": c.MustGet("user")})
+}
+
+func setAuthCookie(c *gin.Context, token string, maxAge int) {
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("access_token", token, maxAge, "/", "", c.Request.TLS != nil, true)
+}
+
+func (h *Handler) Logout(c *gin.Context) {
+	setAuthCookie(c, "", -1)
+	c.JSON(http.StatusOK, gin.H{"data": gin.H{"message": "Sudah keluar"}})
 }

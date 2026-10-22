@@ -81,7 +81,6 @@
   <script>
     const $ = (id) => document.getElementById(id);
     const API_URL = 'http://localhost:8080';
-    let token = ''; // Token hanya di memori; muat ulang halaman memerlukan login lagi.
     const rupiah = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' });
 
     function status(message, error = false) {
@@ -91,16 +90,14 @@
 
     async function request(path, body) {
       const headers = {};
-      if (token) headers.Authorization = `Bearer ${token}`;
       if (body !== undefined) headers['Content-Type'] = 'application/json';
       const response = await fetch(`${API_URL}${path}`, {
-        method: body === undefined ? 'GET' : 'POST', headers,
+        method: body === undefined ? 'GET' : 'POST', headers, credentials: 'include',
         body: body === undefined ? undefined : JSON.stringify(body),
         signal: AbortSignal.timeout(15000)
       });
       const result = await response.json();
       if (!response.ok) {
-        if (response.status === 401) token = '';
         throw new Error(result.error || `HTTP ${response.status}`);
       }
       return result.data;
@@ -168,22 +165,20 @@
       event.preventDefault();
       run(event.submitter, async () => {
         const form = new FormData(event.target);
-        const data = await request('/api/auth/login', { email: form.get('email'), password: form.get('password') });
-        token = data.access_token;
+        await request('/api/auth/login', { email: form.get('email'), password: form.get('password') });
         event.target.reset();
         await loadOrders();
       });
     };
-    $('logout').onclick = () => {
-      token = '';
+    $('logout').onclick = () => run($('logout'), async () => {
+      await request('/api/auth/logout', {});
       $('orders').replaceChildren();
       $('detail').textContent = 'Pilih order dari daftar.';
       status('Sudah keluar.');
-    };
+    });
     $('create').onsubmit = (event) => {
       event.preventDefault();
       run(event.submitter, async () => {
-        if (!token) throw new Error('Login terlebih dahulu.');
         const order = await request('/api/private/orders', { items: readItems() });
         $('detail').textContent = JSON.stringify(order, null, 2);
         $('items').replaceChildren();
