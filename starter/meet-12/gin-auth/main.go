@@ -24,21 +24,7 @@ import (
 
 func setupEngine(db *gorm.DB, secret []byte) *gin.Engine {
 	r := gin.Default()
-	// ponytail: client lokal port 8081; tambah origin eksplisit saat deployment.
-	r.Use(func(c *gin.Context) {
-		origin := c.GetHeader("Origin")
-		c.Header("Vary", "Origin")
-		if origin == "http://localhost:8081" || origin == "http://127.0.0.1:8081" {
-			c.Header("Access-Control-Allow-Origin", origin)
-			c.Header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-			c.Header("Access-Control-Allow-Headers", "Authorization, Content-Type")
-		}
-		if c.Request.Method == http.MethodOptions {
-			c.AbortWithStatus(http.StatusNoContent)
-			return
-		}
-		c.Next()
-	})
+
 	r.Use(func(c *gin.Context) {
 		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 1<<20)
 		c.Next()
